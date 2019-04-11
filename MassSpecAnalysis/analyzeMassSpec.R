@@ -51,9 +51,6 @@ peaks <- mat.or.vec(numPoints,1)
 masses <- massSpecMatrix[,1]
 intensities <- massSpecMatrix[,2]
 
-## We make a growing list of the indices of the peaks
-peaks = c()
-
 ## Now, we have to go through data and compute those things
 ## Initialize the indices, including the length of the vector
 maxIndex <- length(masses)
@@ -157,6 +154,6 @@ for (index in indices){
 }
 
 ## This flushes the plotting to the file
-print("Done")
 dev.off()
+print("Really Done")
 
