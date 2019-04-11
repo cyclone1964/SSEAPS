@@ -123,7 +123,7 @@ while(templateEnd < maxIndex) {
 ## area around it by the threshold and where the peak is at the
 ## intensity of the point.
 temp = intensities / normalizer
-indices = which(temp > threshold & intensities == peaks)
+indices = which(temp > threshold & intensities == peaks & masses < 2000)
 
 ## Now plot the mass spec. First just where the peaks are and then
 ## the entire one so that we can see where it found the peaks.
