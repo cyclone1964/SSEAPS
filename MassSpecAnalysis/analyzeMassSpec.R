@@ -1,19 +1,38 @@
-## analyzeMassSpec - analyze a Mass Spectrometer Output This script
-## (as opposed toa function) analyzes the mass spec. ALl input and
-## output file names are formed from a unique ID, assumed passed as
-## the first command line argument.
+## analyzeMassSpec - analyze a Mass Spectrometer Output. This script
+## (as opposed to a function) analyzes the mass spec and can be called from the shell using Rscript to invoke it as follows:
+##
+## Rscript analyzeMassSpec 123456
+##
+## Where the first argument (in this case 123456) is a unique ID used
+## to keep instantiations from stepping on each other.
+##
+## The input mass spec is expected to be in a file called
+## MassSpec-ID.csv as a two-column .csv with no more than 5 header
+## lines.
+##
+## It will plot the Mass Spec into a ping file called MassSpec-ID.png
+## and identify up to 8 peaks to be analyzed. It will then, using the
+## program computeParallelComposition, generate a file called
+## Compositions-ID-[0-7].csv, each one containing the composition list
+## for the identified peak weights.
+
+## Get the command line arguments that matter
 args <- commandArgs(TRUE)
 ID <- args[1]
 
+## Form the name of the input file
 fileName = paste("MassSpec-",ID,".csv",sep="")
 
-## These parameters seemed to work best
+## These parameters seemed to work best when it comes to identifying
+## peaks inthe Mass Spec using a split window normalizer.
 templateWidth <- 8
 peakWidth <-  3
 threshold <- 1.5
 maxPeptideLength <- 16
   
-## First, load the file, which is presumed to be a 2 column CSV
+## Load the file, which is presumed to be a 2 column CSV. Use
+## read.table since it can deal with comments and take the "skip"
+## argument.
 massSpec <- read.table(fileName,skip=5,sep=',')
 
 ## Convert that to a matrix because I hate typing $ all the time
@@ -51,8 +70,11 @@ peaks <- mat.or.vec(numPoints,1)
 masses <- massSpecMatrix[,1]
 intensities <- massSpecMatrix[,2]
 
-## Now, we have to go through data and compute those things
-## Initialize the indices, including the length of the vector
+## Now, we have to go through data and compute the split window
+## normalizer. IN order to do this quickly, given that the masses are
+## not uniformly separated, we set up the limits of the template and
+## the "peak". The peak is the middle part of the normalizer that we
+## don't include in the normalization.
 maxIndex <- length(masses)
 peakEnd <- 1
 peakStart <- 1
@@ -67,8 +89,8 @@ while(currentIndex < maxIndex &&
       masses[currentIndex] - masses[templateStart] < templateWidth)
     currentIndex = currentIndex + 1
 
-## Now the peak peaks and the end of the template start from
-## there.
+## Now the peak limits and the end limit and the end of the template
+## start from there.
 peakEnd <- currentIndex
 peakStart <- currentIndex
 templateEnd <- currentIndex
@@ -76,56 +98,66 @@ templateEnd <- currentIndex
 ## Now, go down from there to find the start of the peak
 while(peakStart > 1 &&
       masses[currentIndex] - masses[peakStart] < peakWidth)
-    peakStart = peakStart - 1
+    peakStart <- peakStart - 1
 
 ## and the end of the peak window and template window above that.
 while(peakEnd <  maxIndex &&
       masses[peakEnd] - masses[currentIndex] < peakWidth)
-    peakEnd= peakEnd + 1
+    peakEnd <- peakEnd + 1
 while(templateEnd <  maxIndex &&
       masses[templateEnd] - masses[currentIndex] < templateWidth)
-    templateEnd = templateEnd + 1
+    templateEnd <- templateEnd + 1
 
 ## Now, while there is room to move the template end upwards ...
 while(templateEnd < maxIndex) {
     
     ## Compute the normalizer and the central peaks in the
     ## current window
-    normalizer[currentIndex] =
+    normalizer[currentIndex] <-
         max(c(max(intensities[templateStart:(peakStart-1)]),
               max(intensities[(peakEnd+1):templateEnd])))
-    peaks[currentIndex] = max(intensities[peakStart:peakEnd])
+    peaks[currentIndex] <- max(intensities[peakStart:peakEnd])
     
     ## Move up the current index ...
-    currentIndex = currentIndex+1
+    currentIndex <- currentIndex+1
     
     ## And like above, update the limits of the peak and templates
     while(peakStart < currentIndex &&
           masses[currentIndex] - masses[peakStart+1] > peakWidth)
-        peakStart = peakStart + 1
+        peakStart <- peakStart + 1
     while(templateStart <  currentIndex &&
           masses[currentIndex]-masses[templateStart+1] > templateWidth)
-        templateStart = templateStart + 1
+        templateStart <- templateStart + 1
     while(templateEnd <  maxIndex &&
           masses[templateEnd+1] > masses[templateEnd] &&
           masses[templateEnd] - masses[currentIndex] < templateWidth)
-        templateEnd = templateEnd + 1
+        templateEnd <- templateEnd + 1
     while(peakEnd <  templateEnd &&
           masses[peakEnd] - masses[currentIndex] < peakWidth)
-        peakEnd= peakEnd + 1
+        peakEnd<- peakEnd + 1
     
 }
     
-## Normalize and find the ones where the level is higher than the
-## area around it by the threshold and where the peak is at the
-## intensity of the point.
-temp = intensities / normalizer
-indices = which(temp > threshold & intensities == peaks & masses < 2000)
+## Normalize and find the ones where the level is higher than the area
+## around it by the threshold and where the peak is at the intensity
+## of the point. the variable indices holds the indices of the
+## identified peaks.
+##
+## NOTE: At this point, to make debugging faster, we limit the mass to 2000.
+temp <- intensities / normalizer
+indices <- which(temp > threshold & intensities == peaks & masses < 2000)
+
+## now let's sort those indices by intensity and pick the top 8
+sorted <- sort(intensities[indices],index.return=TRUE)
+indices <- indices[sorted$ix]
+if (length(indices) > 8) {
+    indices <- indices[1:8]
+}
 
 ## Now plot the mass spec. First just where the peaks are and then
 ## the entire one so that we can see where it found the peaks.
 png(paste("MassSpec-",ID,".png",sep=""));
-limits = c(0,1.1*max(intensities))
+limits <- c(0,1.1*max(intensities))
 plot(masses[indices],
      intensities[indices],
      main=paste('Mass Spec for ID',ID),
@@ -136,20 +168,22 @@ lines(masses,intensities)
 ## Now, let's get the compositions by running the code. We had to
 ## put a link to the executable in a path that I could execute
 ## from. This is that path.
-for (index in indices){
-    print(paste("Test Index ",index," mass ",masses[index]))
-    command <- paste("./computePeptideComposition ",
-                     masses[index],
-                     " ",
-                     maxPeptideLength,
-                     " Composition-",index,".csv",
-                     sep='')
-    print(paste("Excecute Command: ",command))
-    system(command)
-    composition <- read.csv(paste("Composition-",index,".csv",sep=''))
+command <-  paste("./computeParallelPeptideComposition ", 
+                  ID);
+for (index in indices) {
+    command <- paste(command," ",masses[index])
+}
+print(paste("Excecute Command: ",command))
+system(command)
+
+## Now read in each of the generated files and count the number of
+## rows so we can annotate the display.
+for (index in 1:length(indices)) {
+    fileName <- paste("Compositions-",ID,"-",index-1,".csv",sep='')
+    composition <- read.csv(fileName)
     print(paste("Found ",nrow(composition)," Compositions"))
-    text(x=masses[peaks[index]],
-         y=intensities[peaks[index]],
+    text(x=masses[indices[index]],
+         y=intensities[indices[index]],
          paste(nrow(composition)),
          adj=c(1,0.5))
 }
