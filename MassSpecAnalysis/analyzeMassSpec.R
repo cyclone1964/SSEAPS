@@ -125,11 +125,12 @@ indices = which(temp > threshold & intensities == peaks & masses < 2000)
 ## Now plot the mass spec. First just where the peaks are and then
 ## the entire one so that we can see where it found the peaks.
 png(paste("MassSpec-",ID,".png",sep=""));
+limits = c(0,1.1*max(intensities))
 plot(masses[indices],
      intensities[indices],
-     main=fileName,
+     main=paste('Mass Spec for ID',ID),
      xlab="Masses (da)",
-     ylab="Intensities")
+     ylab="Intensities",ylim=limits)
 lines(masses,intensities)
 
 ## Now, let's get the compositions by running the code. We had to
@@ -155,5 +156,4 @@ for (index in indices){
 
 ## This flushes the plotting to the file
 dev.off()
-print("Really Done")
 
