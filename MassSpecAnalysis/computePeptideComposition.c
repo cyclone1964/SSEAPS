@@ -140,6 +140,7 @@ static void processType(int numLeft,
   int newMass;
 
   /* The base case: we have no types left to assign */
+  /* printf("Test Type (%d,%d,%d)\n",typeIndex,numLeft,currentMass); */
   if (typeIndex == NUM_AMINO_ACID_TYPES) return;
 
   for (typeCount=0;typeCount <= numLeft; typeCount++) {
@@ -293,7 +294,7 @@ int main(int argc, char**argv)
     
     /* Find the peptides for the input */
     printFlag = 1;
-    findPeptides(inputMass,maxAminoAcids,fp);
+    findPeptides(inputMass,16,fp);
     printf(" Mass %.4lf has %u possible compositions out of %ld peptides\n",
 	   inputMass,numMatches,numCombinations);
     exit(0);
@@ -308,17 +309,18 @@ int main(int argc, char**argv)
   printf("Timing Numbers\n\n");
   printf(" #Acids RunTime\n");
   printFlag = 0;
-  for (maxAminoAcids = 8; maxAminoAcids < 17; maxAminoAcids++) {
+  for (maxAminoAcids = 2; maxAminoAcids < 12 /* 16 */; maxAminoAcids++) {
     numMatches = numCombinations = 0;
     gettimeofday(&startTime,NULL);
     findPeptides(maxAminoAcids * aminoAcidData[NUM_AMINO_ACID_TYPES-1].mass,
-		 maxAminoAcids,NULL);
+		 20,NULL);
     gettimeofday(&endTime,NULL);
     runTime = 1e-6*(endTime.tv_usec - startTime.tv_usec);
     runTime += endTime.tv_sec - startTime.tv_sec;
-    printf(" %6d %7.3f\n",maxAminoAcids,runTime);
+    printf(" %6d %7.3f (%d:%ld)\n",maxAminoAcids,runTime,numMatches,numCombinations);
   }
 
+  exit(1);
   printf("\n\n Test for redundancy\n\n");
   printf("     Mass #Matches #Combinations\n");
 
@@ -329,7 +331,7 @@ int main(int argc, char**argv)
       inputMass += aminoAcidData[rand()%NUM_AMINO_ACID_TYPES].mass;
 
     numMatches = numCombinations = 0;
-    findPeptides(inputMass,14,NULL);
+    findPeptides(inputMass,16,NULL);
     printf("%4.4f %8u %13ld\n",inputMass,numMatches,numCombinations);
   }
   printf("\n\nDone!\n");

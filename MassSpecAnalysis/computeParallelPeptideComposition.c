@@ -439,7 +439,7 @@ int main(int argc, char**argv)
   for (index = 3; index < 12; index++) {
 
     /* Set the maximum number of acids from the loop counter */
-    maxAcids = index;
+    maxAcids = MAX_PEPTIDE_SIZE;
 
     /* Initialize as necessary */
     sprintf(fileName,"TimingTestCase-%02d.csv",index);
