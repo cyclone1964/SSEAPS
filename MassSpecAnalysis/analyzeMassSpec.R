@@ -1,5 +1,6 @@
 ## analyzeMassSpec - analyze a Mass Spectrometer Output. This script
-## (as opposed to a function) analyzes the mass spec and can be called from the shell using Rscript to invoke it as follows:
+## (as opposed to a function) analyzes the mass spec and can be called
+## from the shell using Rscript to invoke it as follows:
 ##
 ## Rscript analyzeMassSpec 123456
 ##
@@ -145,10 +146,10 @@ while(templateEnd < maxIndex) {
 ##
 ## NOTE: At this point, to make debugging faster, we limit the mass to 2000.
 temp <- intensities / normalizer
-indices <- which(temp > threshold & intensities == peaks & masses < 2000)
+indices <- which(temp > threshold & intensities == peaks & masses < 4000)
 
 ## now let's sort those indices by intensity and pick the top 8
-sorted <- sort(intensities[indices],index.return=TRUE)
+sorted <- sort(intensities[indices],index.return=TRUE,decreasing=TRUE)
 indices <- indices[sorted$ix]
 if (length(indices) > 8) {
     indices <- indices[1:8]
@@ -156,36 +157,63 @@ if (length(indices) > 8) {
 
 ## Now plot the mass spec. First just where the peaks are and then
 ## the entire one so that we can see where it found the peaks.
-png(paste("MassSpec-",ID,".png",sep=""));
+png(paste("MassSpec-",ID,".png",sep=""))
 limits <- c(0,1.1*max(intensities))
-plot(masses[indices],
-     intensities[indices],
-     main=paste('Mass Spec for ID',ID),
+
+if (length(indices) > 0) {
+    mass = masses[indices[1]]
+    intensity = intensities[indices[1]]
+    titleString = ""
+} else {
+    titleString = "Mass Spec: NO PEAKS FOUND"
+}
+
+plot(masses,
+     intensities,
+     type="l",
+     main=titleString,
      xlab="Masses (da)",
      ylab="Intensities",ylim=limits)
-lines(masses,intensities)
 
-## Now, let's get the compositions by running the code. We had to
-## put a link to the executable in a path that I could execute
-## from. This is that path.
-command <-  paste("./computeParallelPeptideComposition ", 
-                  ID);
-for (index in indices) {
-    command <- paste(command," ",masses[index])
-}
-print(paste("Excecute Command: ",command))
-system(command)
+if (length(indices) > 0) {
 
-## Now read in each of the generated files and count the number of
-## rows so we can annotate the display.
-for (index in 1:length(indices)) {
-    fileName <- paste("Compositions-",ID,"-",index-1,".csv",sep='')
-    composition <- read.csv(fileName)
-    print(paste("Found ",nrow(composition)," Compositions"))
-    text(x=masses[indices[index]],
-         y=intensities[indices[index]],
-         paste(nrow(composition)),
-         adj=c(1,0.5))
+    ## Put cirlces at the peaks and a solid one where we compute the MassSpec
+    points(masses[indices],intensities[indices],type="p")
+    points(mass,intensity,type="p",pch=19)
+
+    ## Now, let's get the compositions by running the code. We had to
+    ## put a link to the executable in a path that I could execute
+    ## from. This is that path.
+    command <-  paste("./computeParallelPeptideComposition ", ID, mass);
+    print(paste("Excecute Command: ",command))
+    system(command)
+
+    ## Now read in the generated file and count the number of
+    ## rows so we can annotate the display and put a composition in the title
+    acidNames = c("G","A","S","P","V","T","C","L","N","D",
+                  "Q","K","E","M","H","F","R","Y","W")
+    if (length(indices) > 0) {
+        fileName <- paste("Compositions-",ID,"-0.csv",sep='')
+        if (file.exists(fileName)) {
+            composition <- read.csv(fileName)
+            print(paste("Found ",nrow(composition)," Compositions"))
+            titleString = "Mass Spec With Composition: "
+            if (nrow(composition) > 1) {
+                titleString = paste(titleString," (1 of ",nrow(composition),")")
+            }
+            subString = ""
+            for (acidIndex in 1:length(acidNames)) {
+                subString = paste(subString,
+                                  acidNames[acidIndex],
+                                  composition[1,acidIndex],
+                                  sep="");
+            }
+            title(main=titleString);
+            mtext(subString,side=3,line=0)
+        } else {
+            title(main="Mass Spec: Inversion Error")
+        }
+    }
 }
 
 ## This flushes the plotting to the file
