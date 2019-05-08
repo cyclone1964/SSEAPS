@@ -22,7 +22,7 @@ args <- commandArgs(TRUE)
 ID <- args[1]
 
 ## Form the name of the input file
-fileName = paste("MassSpec-",ID,".csv",sep="")
+fileName = paste("./mic-data/",ID,"-data.csv",sep="")
 
 ## These parameters seemed to work best when it comes to identifying
 ## peaks inthe Mass Spec using a split window normalizer.
@@ -157,7 +157,7 @@ if (length(indices) > 8) {
 
 ## Now plot the mass spec. First just where the peaks are and then
 ## the entire one so that we can see where it found the peaks.
-png(paste("MassSpec-",ID,".png",sep=""))
+png(paste("./mic-output/MassSpec-",ID,".png",sep=""))
 limits <- c(0,1.1*max(intensities))
 
 if (length(indices) > 0) {
@@ -184,7 +184,7 @@ if (length(indices) > 0) {
     ## Now, let's get the compositions by running the code. We had to
     ## put a link to the executable in a path that I could execute
     ## from. This is that path.
-    command <-  paste("./computeParallelPeptideComposition ", ID, mass);
+    command <-  paste("/usr/local/bin/computeParallelPeptideComposition ", ID, mass);
     print(paste("Excecute Command: ",command))
     system(command)
 

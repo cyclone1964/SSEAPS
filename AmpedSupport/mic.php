@@ -9,7 +9,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
 	<link rel="icon" href="/favicon.ico" type="image/x-icon">
-    <script type="text/javascript">
+	<script type="text/javascript">
 	
 	function isFilled(elm) {
 		if (elm == "" ||
@@ -20,7 +20,7 @@
 			return true;
 		}
 	}
-	</script>
+	</script> 
 	</head>
 	<body>
 
@@ -108,7 +108,7 @@
               </h4>
 			</div>
 		    <div class="col-sm-6">
-              <div style="text-align: left;"><input style="height: 35px; width: 100%;" placeholder="Enter concentration Control Antibiotic used." name="Antibiotic_Name" id="Antibiotic_Name" required type="text" value="<?php echo $antibiotic ?>">
+              <div style="text-align: left;"><input style="height: 35px; width: 100%;" placeholder="Enter Control Antibiotic used." name="Antibiotic_Name" id="Antibiotic_Name" required type="text" value="<?php echo $antibiotic ?>">
               </div>
 			  <br>
 		    </div>
@@ -120,18 +120,18 @@
               </h4>
 			</div>
 		    <div class="col-sm-6">
-              <div style="text-align: left;"><input style="height: 35px; width: 100%;" placeholder="Enter concentration used." name="Con_Name" id="Con_Name" required type="text" value="<?php echo $con ?>">
+              <div style="text-align: left;"><input style="height: 35px; width: 100%;" placeholder="Enter concentration used in mcgperml." name="Con_Name" id="Con_Name" required type="text" value="<?php echo $con ?>">
               </div>
 			  <br>
 		    </div>
 		   </div>
 		   <div class="row" >
 			<div class="col-sm-4">
-			  <h4 style="text-align: left;"><span style="font-weight: normal;">How many time points does your data have? </span><br>
+			  <h4 style="text-align: left;"><span style="font-weight: normal;">Enter the time points in minutes, comma separated without spaces? </span><br>
               </h4>
 			</div>
 		    <div class="col-sm-6">
-              <div style="text-align: left;"><input style="height: 35px; width: 100%;" placeholder="How many time points do you have." name="Time_Point" id="Time_Point" required type="text" value="<?php echo $timepoint?>">
+              <div style="text-align: left;"><input style="height: 35px; width: 100%;" placeholder="Enter the number of time points." name="Time_Point" id="Time_Point" required type="text" value="<?php echo $timepoint?>">
 				<br />
 				<div id="container"></div>
 			  </div>
@@ -144,7 +144,7 @@
               </h4>
 			</div>
 		    <div class="col-sm-6">
-              <div style="text-align: left;"><input style="height: 35px; width: 100%;" placeholder="Enter the wells to be excluded.">
+              <div style="text-align: left;"><input style="height: 35px; width: 100%;" placeholder="Enter the wells to be excluded. Leave blank if there are none">
               </div>
 			  <br>
 		    </div>
